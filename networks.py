@@ -71,23 +71,22 @@ class DuelConvNet(nn.Module):
 
         self.noisy = noisy
         if noisy:
-            linear_cls = NoisyLinear
-            additional = dict(std_init=.5, device=device)
+            def linear_cls(_in, _out):
+                return NoisyLinear(_in, _out, std_init=.5, device=device)
         else:
             linear_cls = nn.Linear
-            additional = dict()
         in_dim = calc(in_dims[1], kernels, strides) * calc(in_dims[2], kernels, strides) * channels[-1]
-        self.value1 = linear_cls(in_dim, hidden_dim, **additional)
-        self.value2 = linear_cls(hidden_dim, 1, **additional)
-        self.advantage1 = linear_cls(in_dim, hidden_dim, **additional)
-        self.advantage2 = linear_cls(hidden_dim, out_dim, **additional)
+        self.value1 = linear_cls(in_dim, hidden_dim)
+        self.value2 = linear_cls(hidden_dim, 1)
+        self.advantage1 = linear_cls(in_dim, hidden_dim)
+        self.advantage2 = linear_cls(hidden_dim, out_dim)
 
         self.uncertainty = uncertainty
         if uncertainty:
             self.sigma = nn.Sequential(
-                nn.Linear(in_dim, hidden_dim),
+                linear_cls(in_dim, hidden_dim),
                 nn.ReLU(),
-                nn.Linear(hidden_dim, out_dim),
+                linear_cls(hidden_dim, out_dim),
             )
 
     def forward(self, x, reset_noise=False):
@@ -137,21 +136,20 @@ class ConvNet(nn.Module):
 
         self.noisy = noisy
         if noisy:
-            linear_cls = NoisyLinear
-            additional = dict(std_init=.5, device=device)
+            def linear_cls(_in, _out):
+                return NoisyLinear(_in, _out, std_init=.5, device=device)
         else:
             linear_cls = nn.Linear
-            additional = dict()
         in_dim = calc(in_dims[1], kernels, strides) * calc(in_dims[2], kernels, strides) * channels[-1]
-        self.linear1 = linear_cls(in_dim, hidden_dim, **additional)
-        self.linear2 = linear_cls(hidden_dim, out_dim, **additional)
+        self.linear1 = linear_cls(in_dim, hidden_dim)
+        self.linear2 = linear_cls(hidden_dim, out_dim)
 
         self.uncertainty = uncertainty
         if uncertainty:
             self.sigma = nn.Sequential(
-                nn.Linear(in_dim, hidden_dim),
+                linear_cls(in_dim, hidden_dim),
                 nn.ReLU(),
-                nn.Linear(hidden_dim, out_dim),
+                linear_cls(hidden_dim, out_dim),
             )
 
     def forward(self, x, reset_noise=False):

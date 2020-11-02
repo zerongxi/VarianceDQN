@@ -86,7 +86,7 @@ class DQNAgent:
             else:
                 q_next = q_next.max(1)[0]
             q_[not_t] += q_next.detach() * self.gamma
-            td_err = (q_ - q).detach().abs()
+            td_err = (q_ - q).detach().abs().clamp(1.)
         if self.uncertainty:
             sigma = sigma.gather(1, action).squeeze(1)
         loss = F.smooth_l1_loss(q, q_, reduction="none")
@@ -105,4 +105,4 @@ class DQNAgent:
                 param.grad *= self.grad_scalar
         torch.nn.utils.clip_grad_norm_(self.q.parameters(), 10.)
         self.optimizer.step()
-        return idx, td_err.clamp(1.)
+        return idx, td_err
